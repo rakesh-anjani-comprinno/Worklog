@@ -1,0 +1,11 @@
+<mat-paginator
+  #paginator
+  [showFirstLastButtons]="showFirstLastButtonsVisible ? true : false"
+  [pageSizeOptions]="pageSizeOptions"
+  [pageSize]="pageSize"
+  [pageIndex]="pageIndex"
+  [length]="totalItems"
+  (page)="onPageChange($event)"
+  [attr.aria-label]="ariaLabel"
+>
+</mat-paginator>

@@ -1,0 +1,117 @@
+<div class="home-container">
+    <div class="home-form">
+        <form [formGroup]="formGroup" fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="40px"
+            style="width: 100%;">
+            <mat-form-field class="example-full-width" appearance="outline">
+                <mat-label>Search Name</mat-label>
+                <input matInput aria-label="Empylee Name" [matAutocomplete]="auto" formControlName="user">
+                @if(isUserLoading){
+                    <button matSuffix mat-icon-button aria-label="loadingIcon">
+                        <mat-spinner diameter="20"></mat-spinner>
+                    </button>
+                }
+                <mat-autocomplete #auto="matAutocomplete">
+                    @for (user of filteredUsers; track user) {
+                    <mat-option [value]="user.displayName">
+                        <div fxLayout="column" fxLayoutAlign="center start">
+                            <span class="bold" [matTooltip]="user.displayName" matTooltipPosition="above"
+                                [matTooltipShowDelay]="1000">{{user.displayName | ellipsis: 17}}</span>
+                            <small>AccountType: {{user.accountType}}</small>
+                        </div>
+                    </mat-option>
+                    }@empty{
+                        @if(filteredUsers){
+                            <mat-option>Search Valid User</mat-option>
+                        }
+                    }
+                    
+                    @if(isUserLoading){
+                    <mat-option>
+                        <div style="display: flex; justify-content: center; align-items: center;">
+                            <mat-spinner diameter="20"></mat-spinner>
+                        </div>
+                    </mat-option>
+                    }
+
+                    @if( !filteredUsers && !isUserLoading){
+                    <mat-option>
+                        <mat-icon matIconSuffix>refresh</mat-icon>
+                        <span>Error</span>
+                    </mat-option>
+                    }
+
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Enter a date range</mat-label>
+                <mat-date-range-input [rangePicker]="picker">
+                    <input matStartDate formControlName="start" placeholder="Start date">
+                    <input matEndDate formControlName="end" placeholder="End date">
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-date-range-picker #picker></mat-date-range-picker>
+
+                @if (formGroup.controls.start.hasError('matStartDateInvalid')) {
+                <mat-error>Invalid start date</mat-error>
+                }
+                @if (formGroup.controls.end.hasError('matEndDateInvalid')) {
+                <mat-error>Invalid end date</mat-error>
+                }
+            </mat-form-field>
+
+            <!-- <p>Selected range: {{range.value | json}}</p> -->
+
+        </form>
+    </div>
+    <div fxLayout="row" fxLayoutAlign="center center">
+        @if(formGroup.valid){
+            <button mat-flat-button color="primary" (click)="onWorklogRequest()">Request WorkLog</button>
+        }@else{
+            <button mat-flat-button color="primary" [disabled]="true" (click)="onWorklogRequest()">Request WorkLog</button>
+        }
+    </div>
+
+    <div class="home-body">
+        @switch(true){
+            @case(worklogRequest){
+                <app-table
+                [apiList]="$api"
+                [pageEvent]="pageEvent"
+                [headers]="headers"
+                [refreshEvent]="refreshEvent"
+                [tableLoadingClass]="'table-loading'"
+                [templates]="{summaryTemp,idTemp,startedTemp,createdTemp,updatedTemp}"
+                >
+                </app-table>
+                <app-paginator [totalItems]="$count" [pageSize]="pageEvent.pageSize" [pageIndex]="pageEvent.pageIndex" (pageChanged)="onPagaeChanged($event)">
+                </app-paginator>
+            }
+            @default {
+                <div fxLayout="row" fxLayoutAlign="center center" class="request-worklog-cls">
+                    <p>Request Your WorkLog</p>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<ng-template #summaryTemp let-data="data">
+    <span class="summary-span" [matTooltip]="data.summary" matTooltipPosition="above">
+        {{data.issueKey + " | "+ data.summary }}
+    </span>
+</ng-template>
+<ng-template #idTemp let-data="data">
+    <a [href]="data.workLogItem" [matTooltip]="data.workLogItem" matTooltipPosition="above">
+        {{data.id }}
+    </a>
+</ng-template>
+<ng-template #startedTemp let-data="data">
+    <span>{{ data.started | customDate}}</span>
+</ng-template>
+<ng-template #createdTemp let-data="data">
+    <span>{{ data.created | customDate}}</span>
+</ng-template>
+<ng-template #updatedTemp let-data="data">
+    <span>{{ data.updated | customDate}}</span>
+</ng-template>

@@ -1,0 +1,8 @@
+{
+    "/rest": {
+        "target": "https://comprinno-tech.atlassian.net",
+        "secure": true,
+        "changeOrigin": true,
+        "logLevel": "debug"
+    }
+}
