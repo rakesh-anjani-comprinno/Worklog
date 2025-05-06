@@ -120,6 +120,12 @@ export class Utility {
     getTimeZone(cache: boolean = true) {
       return momentTz.tz.guess(cache);
     },
+
+    getTodayAtMidnight(): Date {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      return today
+    }
   };
 
   // System

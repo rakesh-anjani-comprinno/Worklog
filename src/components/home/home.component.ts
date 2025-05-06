@@ -52,8 +52,8 @@ import { CustomDatePipe } from '@pipe/custom-date.pipe';
 export class HomeComponent implements OnInit{
 
   readonly formGroup = new FormGroup({
-    start: new FormControl<Date>(new Date,[Validators.required]),
-    end: new FormControl<Date>(new Date,[Validators.required]),
+    start: new FormControl<Date>(Utility.DATEUtility.getTodayAtMidnight(),[Validators.required]),
+    end: new FormControl<Date>(Utility.DATEUtility.getTodayAtMidnight(),[Validators.required]),
     user : new FormControl(null,[Validators.required])
   });
   users!: User[]
