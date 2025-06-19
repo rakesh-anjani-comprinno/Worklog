@@ -21,6 +21,9 @@ import { ObjectUtils } from '@utilities/object.utils'
 import { FormUtils } from '@utilities/form.utils'
 import { finalize, map, pipe, Subscription } from 'rxjs'
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
+import { MatIconModule } from '@angular/material/icon'
+import { MatTooltipModule } from '@angular/material/tooltip'
+import { Utility } from '@utilities/utility'
 
 @Component({
   selector: 'app-table',
@@ -31,7 +34,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
     MatSortModule,
     NgTemplateOutlet,
     NgClass,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatIconModule,
+    MatTooltipModule
   ],
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss',
@@ -71,6 +76,8 @@ export class TableComponent implements OnInit {
   isTableLoading:boolean = true;
   @Input() tableLoadingClass:string
   @Input() emptyTemplate:TemplateRef<any>
+
+  @Output() isLoading: EventEmitter<boolean> = new EventEmitter<boolean>()
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -141,7 +148,11 @@ export class TableComponent implements OnInit {
         sort: this.sort?.direction ?? null,
         ...this.getFormValues(),
       })
-    ).pipe(finalize(()=> this.isTableLoading = false))
+    ).pipe(finalize(()=> {
+      this.isTableLoading = false
+      this.isLoading.emit(false);
+    }
+    ))
     .subscribe((res: any) => {
       this.dataSource.data = res
     })
@@ -172,4 +183,5 @@ export class TableComponent implements OnInit {
       })
     }
   }
+
 }

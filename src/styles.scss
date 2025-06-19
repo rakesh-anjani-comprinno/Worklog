@@ -39,3 +39,13 @@
     font-weight: 700 !important;
     background: lightblue !important;
 }
+
+.table-download {
+    display: flex;
+    justify-content: flex-end;
+    margin:10px;
+    mat-icon {
+        margin-right:30px;
+        cursor: pointer;
+    }
+}

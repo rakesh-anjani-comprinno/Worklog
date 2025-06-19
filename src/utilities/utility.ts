@@ -10,7 +10,7 @@ import * as momentTz from 'moment-timezone';
 import QRCode from 'qrcode';
 import { Md5 } from 'ts-md5';
 import { v1 as uuidv1, v3 as uuidv3, v4 as uuidv4, v5 as uuidv5, validate } from 'uuid';
-
+import * as xlsx from 'xlsx';
 type UuidVersion = 'v1' | 'v3' | 'v4' | 'v5';
 
 interface UuidOptions {
@@ -264,6 +264,26 @@ export class Utility {
     openDownLoadFileInNewTab(data: any, type: string | undefined) {
       window.open(this.createDownloadURL(data, type));
     },
+    
+    fileMimeType (type:string) {
+      const obj = {
+        'xlsx':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }
+      return obj[type] || 'Not Found'
+    },
+
+    // data = { sheet1: sheetData1 , sheet2: SheetData2 }
+    createXLSheetBuffer (data:{ [ key:string ]: any[] }, formatOfOutput: 'array' | 'buffer' = 'array'):any  {
+      let result = {}
+      const webbook = xlsx.utils.book_new();
+      Object.keys(data).forEach((ele:string,index) => {
+          const worksheet : xlsx.WorkSheet = xlsx.utils.json_to_sheet(data[ele]);
+          result = {...result, [ele] : worksheet }
+          xlsx.utils.book_append_sheet(webbook,worksheet,ele);
+      })
+      const xlsheetbuffer = xlsx.write(webbook, { bookType: 'xlsx', type: formatOfOutput });
+      return {...result, xlsheetbuffer, webbook};
+    }
   };
 
   public static readonly DOCUMENT = {

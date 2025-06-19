@@ -7,14 +7,14 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule, MatSuffix } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Issue, pageEvent, User } from '@model/app.model';
 import { EllipsisPipe } from '@pipe/ellipsis.pipe';
 import { HttpService } from '@services/http/http.service';
-import { catchError, finalize, map, Observable, of, tap } from 'rxjs';
+import { catchError, finalize, map, Observable, of, Subject, takeUntil, tap } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { TableComponent } from '@components/common/table/table.component';
 import { PaginatorComponent } from '@components/common/paginator/paginator.component';
@@ -22,6 +22,8 @@ import { DEFAULT_PAGE_EVENT, HEADERS_WORKLOG } from '@constants/constants';
 import { PageEvent } from '@angular/material/paginator';
 import { Utility } from '@utilities/utility';
 import { CustomDatePipe } from '@pipe/custom-date.pipe';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import { duration } from 'moment';
 
 @Component({
   selector: 'app-home',
@@ -43,7 +45,8 @@ import { CustomDatePipe } from '@pipe/custom-date.pipe';
     MatIconModule,
     TableComponent,
     PaginatorComponent,
-    CustomDatePipe
+    CustomDatePipe,
+    MatSuffix,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
@@ -63,12 +66,14 @@ export class HomeComponent implements OnInit{
   headers = HEADERS_WORKLOG
   $count!: number
   pageEvent: pageEvent = DEFAULT_PAGE_EVENT
-  isTableLoading:boolean = true
+  isExcelDownloading:boolean = false
   worklogRequest : boolean = false
   refreshEvent = new EventEmitter<any>()
-
+  tableData = []
+ private destroy$ = new Subject<void>();
   constructor(
-    private httpService : HttpService
+    private httpService : HttpService,
+    private snackbarService: MatSnackBar
   ){
     this.setUserApi()
   }
@@ -107,56 +112,65 @@ export class HomeComponent implements OnInit{
   }
 
   $api = (e: {}) => {
+    let params = this.createParams()
+    return this.httpService.get<Issue>('api/worklog/issues',{...params,...e}).pipe(
+      map((res:Issue) => {
+        this.$count = res.total
+        return this.modifiedIssueResponse(res.issues)
+      })
+    )
+  }
+
+  private createParams(){
     const formGroupData = this.formGroup.getRawValue()
-    let params = {}
+    let params:any = {maxResults: 10, startAt: 0}
     if(formGroupData.start && formGroupData.end){
       const startDate = Utility.DATEUtility.JSDateIntoMoment(formGroupData.start).format('YYYY-MM-DD')
       const endDate = Utility.DATEUtility.JSDateIntoMoment(formGroupData.end).format('YYYY-MM-DD')
       params = {  
         jql: `worklogDate >= "${startDate}" and worklogDate <= "${endDate}" and worklogAuthor= "${formGroupData.user}"  ORDER BY created DESC`,
         fields: 'summary,worklog',
+        ...params
       }
     }
-    return this.httpService.get<Issue>('api/worklog/issues',{...params,...e}).pipe(
-      finalize(()=> this.isTableLoading = true),
-      map((res:Issue) => {
-        this.$count = res.total
-        let result = []
-        res.issues.map((issue, index) => {
-          const issueKey = issue.key
-          const summary = issue.fields.summary
-          const worklogs = issue.fields.worklog.worklogs
-          
-          const worklogWithIssueData =  worklogs.map((worklog) => {
-              if (!formGroupData.start || !formGroupData.end) {
-                throw new Error('Start and end dates are required');
-              }
-              const userStartTime = new Date(formGroupData.start).getTime()
-              const userEndTime = new Date(formGroupData.end).setHours(23, 59, 59, 999)
-              const workLogStartTime = new Date(worklog.started).getTime() 
-              const workLogEndTime = new Date(worklog.created).getTime()
+    return params
+  }
 
-              const providedDisplayName = formGroupData.user
-              const displayName = worklog.author.displayName
+  private modifiedIssueResponse(issues:any[]){
+    const formGroupData = this.formGroup.getRawValue()
+    let result = []
+    issues.map((issue, index) => {
+      const issueKey = issue.key
+      const summary = issue.fields.summary
+      const worklogs = issue.fields.worklog.worklogs
 
-              const isWorkLogValid = userStartTime <= workLogStartTime && userEndTime >= workLogEndTime && providedDisplayName === displayName
-              if(isWorkLogValid){
-                return {  
-                  ...worklog,
-                  issueKey: issueKey,
-                  summary: summary,
-                  timeSpend:worklog.timeSpent,
-                  workLogItem:`https://comprinno-tech.atlassian.net/browse/${issueKey}?focusedWorklogId=${worklog.id}`,
-                }
-              }
-              return []
-          }).filter((e)=> e?.id);
-          console.log("worklogWithIssueData",worklogWithIssueData)
-          result = result.concat(worklogWithIssueData)
-        })
-        return result;
-      })
-    )
+      const worklogWithIssueData = worklogs.map((worklog) => {
+        if (!formGroupData.start || !formGroupData.end) {
+          throw new Error('Start and end dates are required');
+        }
+        const userStartTime = new Date(formGroupData.start).getTime()
+        const userEndTime = new Date(formGroupData.end).setHours(23, 59, 59, 999)
+        const workLogStartTime = new Date(worklog.started).getTime()
+        const workLogEndTime = new Date(worklog.created).getTime()
+
+        const providedDisplayName = formGroupData.user
+        const displayName = worklog.author.displayName
+
+        const isWorkLogValid = userStartTime <= workLogStartTime && providedDisplayName === displayName
+        if (isWorkLogValid) {
+          return {
+            ...worklog,
+            issueKey: issueKey,
+            summary: summary,
+            timeSpend: worklog.timeSpent,
+            workLogItem: `https://comprinno-tech.atlassian.net/browse/${issueKey}?focusedWorklogId=${worklog.id}`,
+          }
+        }
+        return []
+      }).filter((e) => e?.id);
+      result = result.concat(worklogWithIssueData)
+    })
+    return result;
   }
 
   onPagaeChanged($event: PageEvent) {
@@ -170,5 +184,63 @@ export class HomeComponent implements OnInit{
       this.pageEvent = DEFAULT_PAGE_EVENT
       this.refreshEvent.emit(true)
     }
+  }
+
+  triggerDownloadExcel(){
+    this.generateExcelData()
+  }
+
+  generateExcelData(){
+    let params = this.createParams()
+    this.isExcelDownloading = true
+    this.httpService.get<any>('api/worklog/issues-excel',{...params})
+    .pipe(
+      finalize(()=> this.isExcelDownloading = false)
+    )
+    .subscribe({
+      next: (issues:any[]) => {
+        const data:any[] =  this.modifiedIssueResponse(issues);
+        this.beginDownloadProcess(data)
+       this.snackbarService.open("File Downloaded Succesfully",'',{duration:2000})
+      },
+      error: (error) => {
+        this.tableData = []
+        this.snackbarService.open("File Downloaded Failed Retry",'',{duration:2000})
+        console.error("Issues occure while fetching data api/worklog/issues-excel")
+      }
+    })
+    
+  }
+
+  beginDownloadProcess(tableData:any[]){
+    const form = this.formGroup.getRawValue()
+    const pipe = new CustomDatePipe()
+    const startDate = pipe.transform(form.start,'dd-MMM-yyyy')
+    const endDate = pipe.transform(form.end,'dd-MMM-yyyy')
+
+    const dataOfTable = tableData.map((e:any)=>{
+      return {
+        'WorkLog Id':e.id,
+        issueKey:e.issueKey,
+        summary:e.summary,
+        timeSpend:e.timeSpend,
+        Started:e.started,
+        Ended: e.created
+      }
+    })
+
+    let filename = startDate === endDate ? 
+    `${form.user} ${startDate}` : 
+    `${form.user} ${startDate}-${endDate}`;
+
+    const data = {'Sheet1':dataOfTable}
+    const { xlsheetbuffer , Sheet1 }= Utility.FILE.createXLSheetBuffer(data);
+    const excelMimeType = Utility.FILE.fileMimeType('xlsx');
+    Utility.FILE.downloadFile(filename,xlsheetbuffer,excelMimeType);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

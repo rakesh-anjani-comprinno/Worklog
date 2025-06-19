@@ -64,12 +64,22 @@
 
         </form>
     </div>
-    <div fxLayout="row" fxLayoutAlign="center center">
-        @if(formGroup.valid){
-            <button mat-flat-button color="primary" (click)="onWorklogRequest()">Request WorkLog</button>
-        }@else{
-            <button mat-flat-button color="primary" [disabled]="true" (click)="onWorklogRequest()">Request WorkLog</button>
-        }
+    <div fxLayout="row" fxLayoutAlign="center center" fxLayoutGap="10px">
+            <button style="width: 170px;" mat-flat-button color="primary" (click)="onWorklogRequest()" [disabled]="formGroup.valid ? false : true">Request WorkLog</button>
+            <div class="table-download">
+                    @if(!isExcelDownloading){
+                    <button style="width: 170px;" mat-flat-button color="accent" [matTooltip]="'Download data in excel sheet'"
+                        matTooltipPosition="above" [disabled]="!formGroup.valid ? true: false" (click)="triggerDownloadExcel()">
+                        Download
+                        <mat-icon class="mat-icon-outline" iconPositionEnd>download</mat-icon>
+                    </button>
+                    }@else{
+                    <button style="width: 170px;" mat-flat-button color="accent" [matTooltip]="'Download data in excel sheet'"
+                        matTooltipPosition="above" [disabled]="true">
+                        <mat-spinner diameter="20" color="primary"></mat-spinner>
+                    </button>
+                    }
+            </div>
     </div>
 
     <div class="home-body">

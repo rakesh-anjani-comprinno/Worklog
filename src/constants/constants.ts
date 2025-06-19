@@ -11,7 +11,7 @@ export const HEADERS_WORKLOG = [
     {label: 'Summary',value:'summary'},
     {label: 'Time Spend',value:'timeSpend'},
     {label: 'Started',value:'started'},
-    {label: 'Created',value:'created'},
+    {label: 'Ended',value:'created'},
 ]
 
 export const DEFAULT_PAGE_EVENT = { pageIndex: 0, pageSize: 10}

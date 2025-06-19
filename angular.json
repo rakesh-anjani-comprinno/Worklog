@@ -17,6 +17,8 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+          "baseHref": "/worklog/",
+          "deployUrl": "/worklog/",
             "outputPath": "dist/worklog",
             "index": "src/index.html",
             "browser": "src/main.ts",
