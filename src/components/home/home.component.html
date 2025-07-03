@@ -91,7 +91,7 @@
                 [headers]="headers"
                 [refreshEvent]="refreshEvent"
                 [tableLoadingClass]="'table-loading'"
-                [templates]="{summaryTemp,idTemp,startedTemp,createdTemp,updatedTemp}"
+                [templates]="{summaryTemp,idTemp,startedTemp,clientTemp,createdTemp,updatedTemp}"
                 >
                 </app-table>
                 <app-paginator [totalItems]="$count" [pageSize]="pageEvent.pageSize" [pageIndex]="pageEvent.pageIndex" (pageChanged)="onPagaeChanged($event)">
@@ -124,4 +124,7 @@
 </ng-template>
 <ng-template #updatedTemp let-data="data">
     <span>{{ data.updated | customDate}}</span>
+</ng-template>
+<ng-template #clientTemp let-data="data">
+    <span class="badge" style="text-transform: capitalize">{{ data.client }}</span>
 </ng-template>

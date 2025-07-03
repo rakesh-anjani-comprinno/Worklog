@@ -18,7 +18,7 @@ import { catchError, finalize, map, Observable, of, Subject, takeUntil, tap } fr
 import { MatIconModule } from '@angular/material/icon';
 import { TableComponent } from '@components/common/table/table.component';
 import { PaginatorComponent } from '@components/common/paginator/paginator.component';
-import { DEFAULT_PAGE_EVENT, HEADERS_WORKLOG } from '@constants/constants';
+import { CLIENT_FIELD_NAME, DEFAULT_PAGE_EVENT, HEADERS_WORKLOG, ORGANISATION_FIELD_NAME, UNKNOWN_CLIENT } from '@constants/constants';
 import { PageEvent } from '@angular/material/paginator';
 import { Utility } from '@utilities/utility';
 import { CustomDatePipe } from '@pipe/custom-date.pipe';
@@ -129,7 +129,7 @@ export class HomeComponent implements OnInit{
       const endDate = Utility.DATEUtility.JSDateIntoMoment(formGroupData.end).format('YYYY-MM-DD')
       params = {  
         jql: `worklogDate >= "${startDate}" and worklogDate <= "${endDate}" and worklogAuthor= "${formGroupData.user}"  ORDER BY created DESC`,
-        fields: 'summary,worklog',
+        fields: `summary,worklog,${CLIENT_FIELD_NAME},${ORGANISATION_FIELD_NAME}`,
         ...params
       }
     }
@@ -143,7 +143,8 @@ export class HomeComponent implements OnInit{
       const issueKey = issue.key
       const summary = issue.fields.summary
       const worklogs = issue.fields.worklog.worklogs
-
+      const client = this.getClientFromIssue(issue)
+      
       const worklogWithIssueData = worklogs.map((worklog) => {
         if (!formGroupData.start || !formGroupData.end) {
           throw new Error('Start and end dates are required');
@@ -162,6 +163,7 @@ export class HomeComponent implements OnInit{
             ...worklog,
             issueKey: issueKey,
             summary: summary,
+            client:client,
             timeSpend: worklog.timeSpent,
             workLogItem: `https://comprinno-tech.atlassian.net/browse/${issueKey}?focusedWorklogId=${worklog.id}`,
           }
@@ -223,6 +225,7 @@ export class HomeComponent implements OnInit{
         'WorkLog Id':e.id,
         issueKey:e.issueKey,
         summary:e.summary,
+        client:e.client,
         timeSpend:e.timeSpend,
         Started:e.started,
         Ended: e.created
@@ -237,6 +240,10 @@ export class HomeComponent implements OnInit{
     const { xlsheetbuffer , Sheet1 }= Utility.FILE.createXLSheetBuffer(data);
     const excelMimeType = Utility.FILE.fileMimeType('xlsx');
     Utility.FILE.downloadFile(filename,xlsheetbuffer,excelMimeType);
+  }
+
+  getClientFromIssue(issue:any){
+    return issue.fields?.[CLIENT_FIELD_NAME]?.value || issue.fields?.[ORGANISATION_FIELD_NAME][0]?.name || UNKNOWN_CLIENT
   }
 
   ngOnDestroy() {
