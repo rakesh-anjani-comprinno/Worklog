@@ -10,14 +10,16 @@ export interface User {
 
 export interface Issue {
     expand: "schema,names",
-    startAt: number,
     maxResults: number,
-    total: number,
+    isLast:boolean,
+    nextPageToken?:string,
     issues: Array<any>
 }
 
 export interface pageEvent { 
     pageSize: number;
     pageIndex: number
+    previousPageIndex?: number;
+    length?: number;
 }
 

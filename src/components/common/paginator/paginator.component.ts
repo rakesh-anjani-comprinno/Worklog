@@ -26,7 +26,7 @@ export class PaginatorComponent implements OnInit {
   @Input() pageSizeOptions: number[] = DEFAULT_PAGESIZE_OPTION
   @Input() pageSize: number = DEFAULT_PAGESIZE
   @Input() pageIndex: number = DEFAULT_PAGEINDEX
-  @Input() showFirstLastButtonsVisible: boolean = true
+  @Input() showFirstLastButtonsVisible: boolean = false
   @Input() totalItems: number
   @Output() pageChanged = new EventEmitter<PageEvent>()
   @ViewChild('paginator', { read: ElementRef }) paginatorEleRef: ElementRef

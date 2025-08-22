@@ -1,3 +1,5 @@
+import { pageEvent } from "@model/app.model"
+
 // PAGINATOR
 export const DEFAULT_PAGESIZE_OPTION = [5, 10, 25, 100]
 export const DEFAULT_PAGESIZE = 10
@@ -15,7 +17,7 @@ export const HEADERS_WORKLOG = [
     {label: 'Ended',value:'created'},
 ]
 
-export const DEFAULT_PAGE_EVENT = { pageIndex: 0, pageSize: 10}
+export const DEFAULT_PAGE_EVENT:pageEvent = { pageIndex: 0, pageSize: 10, previousPageIndex : 0}
 
 export const CLIENT_FIELD_NAME = 'customfield_10265'
 

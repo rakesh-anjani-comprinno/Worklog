@@ -94,7 +94,7 @@
                 [templates]="{summaryTemp,idTemp,startedTemp,clientTemp,createdTemp,updatedTemp}"
                 >
                 </app-table>
-                <app-paginator [totalItems]="$count" [pageSize]="pageEvent.pageSize" [pageIndex]="pageEvent.pageIndex" (pageChanged)="onPagaeChanged($event)">
+                <app-paginator [totalItems]="($count | async) ?? 0" [pageSize]="pageEvent.pageSize" [pageIndex]="pageEvent.pageIndex" (pageChanged)="onPagaeChanged($event)">
                 </app-paginator>
             }
             @default {
