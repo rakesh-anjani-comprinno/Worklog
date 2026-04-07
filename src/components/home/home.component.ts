@@ -160,7 +160,8 @@ export class HomeComponent implements OnInit {
         if (!formGroupData.start || !formGroupData.end) {
           throw new Error('Start and end dates are required');
         }
-        const userStartTime = new Date(formGroupData.start).getTime()
+
+        const userStartTime = new Date(formGroupData.start).setHours(0,0,0,0)
         const userEndTime = new Date(formGroupData.end).setHours(23, 59, 59, 999)
         const workLogStartTime = new Date(worklog.started).getTime()
         const workLogEndTime = new Date(worklog.created).getTime()
@@ -168,7 +169,7 @@ export class HomeComponent implements OnInit {
         const providedDisplayName = formGroupData.user
         const displayName = worklog.author.displayName
 
-        const isWorkLogValid = userStartTime <= workLogStartTime && providedDisplayName === displayName
+        const isWorkLogValid = userStartTime <= workLogStartTime && userEndTime >= workLogEndTime && providedDisplayName === displayName
         if (isWorkLogValid) {
           return {
             ...worklog,
